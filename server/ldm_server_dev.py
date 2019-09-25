@@ -12,7 +12,7 @@ from server.image_processing.system_calibration import calibrate
 from clients.webodm import WebODM
 from clients.mago3d import Mago3D
 from drone.drone_image_check import start_image_check
-
+from server.object_detection.ship_yolo import detect_ship
 from server.image_processing.orthophoto_generation.Orthophoto import rectify
 
 # Initialize flask
@@ -94,6 +94,7 @@ def ldm_upload(project_id_str):
             else:
                 return 'Failed to save the uploaded files'
 
+        start_time = time.time()
         # IPOD chain 1: System calibration
         parsed_eo = my_drone.preprocess_eo_file(os.path.join(project_path, fname_dict['eo']))
         if not my_drone.pre_calibrated:
@@ -113,11 +114,27 @@ def ldm_upload(project_id_str):
             sensor_width=my_drone.ipod_params['sensor_width'],
             gsd=my_drone.ipod_params['gsd']
         )
+        end_time = time.time()
+        time_a = end_time - start_time
 
         # IPOD chain 3: Object detection
-        # TODO: Implement object detection functions
-        detected_objects = []
+        detected_objects = detect_ship(
+            'server/json_template/ldm_mago3d_detected_objects.json',
+            os.path.join(project_path, fname_dict['img_rectified'])
+        )
 
+        # TODO: 로딕스 제공 자료
+        with open(os.path.join(project_path, fname_dict['img_rectified'].split('.')[0] + '_ships.json'), 'w') as f:
+            data_ships = []
+            for detected_object in detected_objects:
+                data_ships.append({
+                    'ship_id': detected_object['number'],
+                    'centroid_wkt': detected_object['geometry'],
+                    'bbox_wkt': detected_object['bounding_box_geometry']
+                })
+            json.dump(data_ships, f)
+
+        start_time = time.time()
         # Generate metadata for Mago3D
         img_metadata = create_img_metadata(
             drone_project_id=int(project_id_str),
@@ -136,8 +153,14 @@ def ldm_upload(project_id_str):
             img_rectified_path=os.path.join(project_path, fname_dict['img_rectified']),
             img_metadata=img_metadata
         )
+        end_time = time.time()
+        time_b = end_time - start_time
 
         print(res.text)
+
+        f = open('server/logs/%s.txt' % project_id_str, 'a')
+        processing_time = "%s\t%f\t%f\n" % (fname_dict['img'], time_a, time_b)
+        f.write(processing_time)
 
         return 'Image upload and IPOD chain complete'
 
@@ -194,6 +217,11 @@ def check_sim_from_drone():
     app.config['SIMULATION_ID'] = request.args.get('simulation_id')
     app.config['DRONE']['asked_sim'] = True
     return 'OK'
+
+
+@app.route('/check/drone_name')
+def check_drone_name():
+    return my_drone.get_drone_name()
 
 
 # 오픈드론맵: 후처리

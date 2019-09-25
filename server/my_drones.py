@@ -13,6 +13,10 @@ class BaseDrone(metaclass=ABCMeta):
     }
 
     @abstractmethod
+    def get_drone_name(self):
+        pass
+
+    @abstractmethod
     def preprocess_eo_file(self, eo_path):
         """
         This abstract function parses a given EO file and returns parsed_eo (see below).
@@ -42,6 +46,9 @@ class DJIMavic(BaseDrone):
                  [0.0712517664845147, 0.109248816514592, 0.991457453380122]], dtype=float)
         }
         self.pre_calibrated = pre_calibrated
+
+    def get_drone_name(self):
+        return "DJI Mavic"
 
     def preprocess_eo_file(self, eo_path):
         eo_line = np.genfromtxt(
@@ -77,6 +84,9 @@ class DJIPhantom4RTK(BaseDrone):
         }
         self.pre_calibrated = pre_calibrated
 
+    def get_drone_name(self):
+        return "DJI Phantom 4 RTK"
+
     def preprocess_eo_file(self, eo_path):
         eo_line = np.genfromtxt(
             eo_path,
@@ -106,6 +116,9 @@ class TiLabETRI(BaseDrone):
             "ground_height": 27.0,
         }
         self.pre_calibrated = pre_calibrated
+
+    def get_drone_name(self):
+        return "DJI M600 with TiLab-ETRI real-time transmission system"
 
     def preprocess_eo_file(self, eo_path):
         with open(eo_path, 'r') as f:
