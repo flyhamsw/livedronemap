@@ -124,15 +124,15 @@ def ldm_upload(project_id_str):
         )
 
         # TODO: 로딕스 제공 자료
-        with open(os.path.join(project_path, fname_dict['img_rectified'].split('.')[0] + '_ships.json'), 'w') as f:
-            data_ships = []
-            for detected_object in detected_objects:
-                data_ships.append({
-                    'ship_id': detected_object['number'],
-                    'centroid_wkt': detected_object['geometry'],
-                    'bbox_wkt': detected_object['bounding_box_geometry']
-                })
-            json.dump(data_ships, f)
+        # with open(os.path.join(project_path, fname_dict['img_rectified'].split('.')[0] + '_ships.json'), 'w') as f:
+        #     data_ships = []
+        #     for detected_object in detected_objects:
+        #         data_ships.append({
+        #             'ship_id': detected_object['number'],
+        #             'centroid_wkt': detected_object['geometry'],
+        #             'bbox_wkt': detected_object['bounding_box_geometry']
+        #         })
+        #     json.dump(data_ships, f)
 
         start_time = time.time()
         # Generate metadata for Mago3D
