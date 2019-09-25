@@ -14,6 +14,7 @@ ldm.set_current_project(project_id)
 
 print('Current project ID: %s' % project_id)
 
+
 def upload_data(image_fname, eo_fname):
     result = ldm.ldm_upload(image_fname, eo_fname)
     print(result)
@@ -64,6 +65,5 @@ class Handler(FileSystemEventHandler):
 
 
 if __name__ == '__main__':
-    # upload_data('drone/downloads/2019-06-20/2019-06-20_144752.jpg', 'drone/downloads/2019-06-20/2019-06-20_144752.txt')
     w = Watcher(directory_to_watch=Config.DIRECTORY_TO_WATCH)
     w.run()
