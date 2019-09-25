@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="innopam-ldm@61.38.45.117:3390">
+    <serverData>
+      <paths name="innopam-ldm@61.38.45.117:3390">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/innopam-ldm/livedronemap" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>
