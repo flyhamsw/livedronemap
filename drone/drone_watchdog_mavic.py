@@ -18,6 +18,7 @@ print('Current project ID: %s' % project_id)
 
 def upload_data(image_fname, eo_fname):
     result = ldm.ldm_upload(image_fname, eo_fname)
+    print('response from LDM server:')
     print(result)
 
 
@@ -60,16 +61,18 @@ class Handler(FileSystemEventHandler):
                                    str(eo_dict['yaw']) + '\t' + \
                                    str(eo_dict['pitch']) + '\t' + \
                                    str(eo_dict['roll']) + '\t'
+                    print('EO data:')
                     print(eo_file_data)
                     f.write(eo_file_data)
                 eo_list.append(file_name + Config.EO_FILE_EXT)
                 print('uploading data...')
-                print(file_name + '.' + Config.IMAGE_FILE_EXT)
-                print(file_name + '.' + Config.EO_FILE_EXT)
                 upload_data(
                     file_name + '.' + Config.IMAGE_FILE_EXT,
                     file_name + '.' + Config.EO_FILE_EXT
                 )
+            else:
+                print('But it is not an image file.')
+            print('===========================================================')
 
 
 if __name__ == '__main__':

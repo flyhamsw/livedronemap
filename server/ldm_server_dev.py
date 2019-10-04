@@ -90,7 +90,9 @@ def ldm_upload(project_id_str):
                 return 'No selected file'
             if file and allowed_file(file.filename):  # If the keys and corresponding values are OK
                 fname_dict[key] = secure_filename(file.filename)
-                file.save(os.path.join(project_path, fname_dict[key]))  # 클라이언트로부터 전송받은 파일을 저장한다.
+                # file.save(os.path.join(project_path, fname_dict[key]))
+                # TODO: 로딕스 제공 자료 - [드론명]_[취득시각]_org.jpg
+                file.save(os.path.join(project_path, fname_dict[key]))
             else:
                 return 'Failed to save the uploaded files'
 
