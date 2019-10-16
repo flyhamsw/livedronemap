@@ -19,11 +19,11 @@ def extract_eo(fname):
 
     latitude = metadata['Exif.GPSInfo.GPSLatitude'].value
     longitude = metadata['Exif.GPSInfo.GPSLongitude'].value
-    altitude = metadata['Exif.GPSInfo.GPSAltitude'].value
+    altitude = metadata['Xmp.drone-dji.AbsoluteAltitude'].value
 
     latitude = convert_dms_to_deg(latitude)
     longitude = convert_dms_to_deg(longitude)
-    altitude = convert_fractions_to_float(altitude)
+    altitude = float(altitude)
     roll = float(metadata['Xmp.drone-dji.FlightRollDegree'].value)
     pitch = float(metadata['Xmp.drone-dji.FlightPitchDegree'].value)
     yaw = float(metadata['Xmp.drone-dji.FlightYawDegree'].value)

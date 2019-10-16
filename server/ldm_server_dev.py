@@ -2,6 +2,7 @@ import json
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
+import sqlite3
 
 from flask import Flask, request
 from werkzeug.utils import secure_filename
@@ -93,10 +94,10 @@ def ldm_upload(project_id_str):
                 # file.save(os.path.join(project_path, fname_dict[key]))
                 # TODO: 로딕스 제공 자료 - [드론명]_[취득시각]_org.jpg
                 file.save(os.path.join(project_path, fname_dict[key]))
+                time_recept = time.time()
             else:
                 return 'Failed to save the uploaded files'
 
-        start_time = time.time()
         # IPOD chain 1: System calibration
         parsed_eo = my_drone.preprocess_eo_file(os.path.join(project_path, fname_dict['eo']))
         if not my_drone.pre_calibrated:
@@ -104,6 +105,7 @@ def ldm_upload(project_id_str):
             parsed_eo[3] = omega
             parsed_eo[4] = phi
             parsed_eo[5] = kappa
+        time_syscal = time.time()
 
         # IPOD chain 2: Individual ortho-image generation
         fname_dict['img_rectified'] = fname_dict['img'].split('.')[0] + '.tif'
@@ -116,14 +118,14 @@ def ldm_upload(project_id_str):
             sensor_width=my_drone.ipod_params['sensor_width'],
             gsd=my_drone.ipod_params['gsd']
         )
-        end_time = time.time()
-        time_a = end_time - start_time
+        time_ortho = time.time()
 
         # IPOD chain 3: Object detection
         detected_objects = detect_ship(
             'server/json_template/ldm_mago3d_detected_objects.json',
             os.path.join(project_path, fname_dict['img_rectified'])
         )
+        time_od = time.time()
 
         # TODO: 로딕스 제공 자료
         # with open(os.path.join(project_path, fname_dict['img_rectified'].split('.')[0] + '_ships.json'), 'w') as f:
@@ -136,7 +138,6 @@ def ldm_upload(project_id_str):
         #         })
         #     json.dump(data_ships, f)
 
-        start_time = time.time()
         # Generate metadata for Mago3D
         img_metadata = create_img_metadata(
             drone_project_id=int(project_id_str),
@@ -155,14 +156,20 @@ def ldm_upload(project_id_str):
             img_rectified_path=os.path.join(project_path, fname_dict['img_rectified']),
             img_metadata=img_metadata
         )
-        end_time = time.time()
-        time_b = end_time - start_time
+        time_mago = time.time()
 
         print(res.text)
 
-        f = open('server/logs/%s.txt' % project_id_str, 'a')
-        processing_time = "%s\t%f\t%f\n" % (fname_dict['img'], time_a, time_b)
-        f.write(processing_time)
+        # f = open('server/logs/%s.txt' % project_id_str, 'a')
+        # processing_time = "%s\t%f\t%f\n" % (fname_dict['img'], time_a, time_b)
+        # f.write(processing_time)
+
+        conn = sqlite3.connect('server/livedronemap_log.db')
+        cur = conn.cursor()
+
+        query = 'INSERT INTO processing_time VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        cur.execute(query, (project_id_str, fname_dict['img'], None, None, time_recept, time_syscal, time_ortho, time_od, time_mago))
+        conn.commit()
 
         return 'Image upload and IPOD chain complete'
 
