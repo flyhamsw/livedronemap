@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Flask (server/ldm_server_dev.py)" type="Python.FlaskServer" nameIsGenerated="true">
-    <option name="additionalOptions" value="--host=0.0.0.0 --port=5000" />
+    <option name="additionalOptions" value="--host=0.0.0.0 --port=30000" />
     <module name="livedronemap-new" />
     <option name="target" value="$PROJECT_DIR$/server/ldm_server_dev.py" />
     <option name="targetType" value="PATH" />

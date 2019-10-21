@@ -15,6 +15,7 @@ from clients.mago3d import Mago3D
 from drone.drone_image_check import start_image_check
 from server.object_detection.ship_yolo import detect_ship
 from server.image_processing.orthophoto_generation.Orthophoto import rectify
+from server.image_processing.exif_parser import get_create_time
 
 # Initialize flask
 app = Flask(__name__)
@@ -30,7 +31,7 @@ mago3d = Mago3D(
     api_key=app.config['MAGO3D_CONFIG']['api_key']
 )
 
-from server.my_drones import DJIMavic as My_drone
+from server.my_drones import DJIPhantom4RTK as My_drone
 my_drone = My_drone(pre_calibrated=False)
 
 
@@ -127,17 +128,6 @@ def ldm_upload(project_id_str):
         )
         time_od = time.time()
 
-        # TODO: 로딕스 제공 자료
-        # with open(os.path.join(project_path, fname_dict['img_rectified'].split('.')[0] + '_ships.json'), 'w') as f:
-        #     data_ships = []
-        #     for detected_object in detected_objects:
-        #         data_ships.append({
-        #             'ship_id': detected_object['number'],
-        #             'centroid_wkt': detected_object['geometry'],
-        #             'bbox_wkt': detected_object['bounding_box_geometry']
-        #         })
-        #     json.dump(data_ships, f)
-
         # Generate metadata for Mago3D
         img_metadata = create_img_metadata(
             drone_project_id=int(project_id_str),
@@ -167,9 +157,54 @@ def ldm_upload(project_id_str):
         conn = sqlite3.connect('server/livedronemap_log.db')
         cur = conn.cursor()
 
-        query = 'INSERT INTO processing_time VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        cur.execute(query, (project_id_str, fname_dict['img'], None, None, time_recept, time_syscal, time_ortho, time_od, time_mago))
+        # depreceated - 로딕스 제공 자료
+        # with open(os.path.join(project_path, fname_dict['img_rectified'].split('.')[0] + '_ships.json'), 'w') as f:
+        #     data_ships = []
+        #     for detected_object in detected_objects:
+        #         data_ships.append({
+        #             'ship_id': detected_object['number'],
+        #             'centroid_wkt': detected_object['geometry'],
+        #             'bbox_wkt': detected_object['bounding_box_geometry']
+        #         })
+        #     json.dump(data_ships, f)
+
+        query = 'INSERT INTO processing_time VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        if detected_objects == []:
+            cur.execute(
+                query,
+                (
+                    project_id_str,
+                    fname_dict['img'],
+                    get_create_time(os.path.join(project_path, fname_dict['img'])),
+                    os.path.getmtime(os.path.join(project_path, fname_dict['img'])),
+                    time_recept,
+                    time_syscal,
+                    time_ortho,
+                    time_od,
+                    time_mago,
+                    None,
+                    None
+                )
+            )
+        for detected_object in detected_objects:
+            cur.execute(
+                query,
+                (
+                    project_id_str,
+                    fname_dict['img'],
+                    get_create_time(os.path.join(project_path, fname_dict['img'])),
+                    os.path.getmtime(os.path.join(project_path, fname_dict['img'])),
+                    time_recept,
+                    time_syscal,
+                    time_ortho,
+                    time_od,
+                    time_mago,
+                    detected_object['geometry'],
+                    detected_object['bounding_box_geometry']
+                )
+            )
         conn.commit()
+        conn.close()
 
         return 'Image upload and IPOD chain complete'
 

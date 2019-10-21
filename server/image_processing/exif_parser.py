@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pyexiv2
 
 
@@ -40,5 +42,13 @@ def extract_eo(fname):
     return result
 
 
+def get_create_time(fname):
+    metadata = pyexiv2.ImageMetadata(fname)
+    metadata.read()
+    create_time_local = metadata['Exif.Image.DateTime'].value
+    create_time = (create_time_local - datetime(1970, 1, 1)).total_seconds() - 3600*9  # GMT+9 (S.Korea)
+    return create_time
+
+
 if __name__ == '__main__':
-    print(extract_eo('test.jpg'))
+    print(get_create_time('server/image_processing/test.jpg'))
