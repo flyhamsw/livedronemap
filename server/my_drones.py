@@ -33,6 +33,44 @@ class BaseDrone(metaclass=ABCMeta):
         pass
 
 
+# TODO: 에이미파이 클래스 구현
+class AIMIFYFlirDuoProR(BaseDrone):
+    def __init__(self, pre_calibrated=False):
+        self.ipod_params = {
+            "sensor_width": 6.3,
+            'focal_length': 0.0047,
+            'gsd': 'auto',
+            'ground_height': 27.91387,
+            "R_CB": np.array(
+                [[0.997391604272809, -0.0193033671589004, -0.0695511879297631],
+                 [0.0115400822765142, 0.993826984996126, -0.110339251377565],
+                 [0.0712517664845147, 0.109248816514592, 0.991457453380122]], dtype=float)
+        }
+        self.pre_calibrated = pre_calibrated
+
+    def get_drone_name(self):
+        return "DJI Mavic"
+
+    def preprocess_eo_file(self, eo_path):
+        eo_line = np.genfromtxt(
+            eo_path,
+            delimiter='\t',
+            dtype={
+                'names': ('Image', 'Longitude', 'Latitude', 'Altitude', 'Yaw', 'Pitch', 'Roll'),
+                'formats': ('U15', '<f8', '<f8', '<f8', '<f8', '<f8', '<f8')
+            }
+        )
+
+        eo_line['Roll'] = eo_line['Roll'] * math.pi / 180
+        eo_line['Pitch'] = eo_line['Pitch'] * math.pi / 180
+        eo_line['Yaw'] = eo_line['Yaw'] * math.pi / 180
+
+        parsed_eo = [float(eo_line['Longitude']), float(eo_line['Latitude']), float(eo_line['Altitude']),
+                     float(eo_line['Roll']), float(eo_line['Pitch']), float(eo_line['Yaw'])]
+
+        return parsed_eo
+
+
 class DJIMavic(BaseDrone):
     def __init__(self, pre_calibrated=False):
         self.ipod_params = {

@@ -7,7 +7,7 @@ import sqlite3
 from flask import Flask, request
 from werkzeug.utils import secure_filename
 
-from server import config_flask
+from config import config_flask
 from server.image_processing.img_metadata_generation import create_img_metadata
 from server.image_processing.system_calibration import calibrate
 from clients.webodm import WebODM
@@ -31,7 +31,7 @@ mago3d = Mago3D(
     api_key=app.config['MAGO3D_CONFIG']['api_key']
 )
 
-from server.my_drones import DJIPhantom4RTK as My_drone
+from server.my_drones import DJIMavic as My_drone
 my_drone = My_drone(pre_calibrated=False)
 
 
@@ -52,12 +52,30 @@ def project():
     if request.method == 'POST':
         # Create a new project on Mago3D
         res = mago3d.create_project(request.json['name'], request.json['project_type'], request.json['shooting_area'])
+
         # Mago3D assigns a new project ID to LDM
         project_id = str(res.json()['droneProjectId'])
+
         # Using the assigned ID, ldm makes a new folder to projects directory
         new_project_dir = os.path.join(app.config['UPLOAD_FOLDER'], project_id)
         os.mkdir(new_project_dir)
-        os.mkdir(os.path.join(new_project_dir, 'rectified'))
+
+        conn = sqlite3.connect(app.config['LOG_DB_PATH'])
+        cur = conn.cursor()
+
+        query = 'INSERT INTO project VALUES (?, ?, ?, ?)'
+        cur.execute(
+            query,
+            (
+                project_id,
+                request.json['name'],
+                my_drone.get_drone_name(),
+                time.time(),
+            )
+        )
+        conn.commit()
+        conn.close()
+
         # LDM returns the project ID that Mago3D assigned
         return project_id
 
@@ -80,7 +98,8 @@ def ldm_upload(project_id_str):
         fname_dict = {
             'img': None,
             'img_rectified': None,
-            'eo': None
+            'eo': None,
+            'img_metadata': None,
         }
 
         # Check integrity of uploaded files
@@ -92,8 +111,6 @@ def ldm_upload(project_id_str):
                 return 'No selected file'
             if file and allowed_file(file.filename):  # If the keys and corresponding values are OK
                 fname_dict[key] = secure_filename(file.filename)
-                # file.save(os.path.join(project_path, fname_dict[key]))
-                # TODO: 로딕스 제공 자료 - [드론명]_[취득시각]_org.jpg
                 file.save(os.path.join(project_path, fname_dict[key]))
                 time_recept = time.time()
             else:
@@ -109,7 +126,7 @@ def ldm_upload(project_id_str):
         time_syscal = time.time()
 
         # IPOD chain 2: Individual ortho-image generation
-        fname_dict['img_rectified'] = fname_dict['img'].split('.')[0] + '.tif'
+        fname_dict['img_rectified'] = fname_dict['img'].split('.')[0] + '_rectified.tif'
         bbox_wkt = rectify(
             project_path=project_path,
             img_fname=fname_dict['img'],
@@ -135,7 +152,7 @@ def ldm_upload(project_id_str):
             file_name=fname_dict['img_rectified'],
             detected_objects=detected_objects,
             drone_id='0',
-            drone_name='my_drone',
+            drone_name=my_drone.get_drone_name(),
             parsed_eo=parsed_eo
         )
 
@@ -146,27 +163,16 @@ def ldm_upload(project_id_str):
             img_rectified_path=os.path.join(project_path, fname_dict['img_rectified']),
             img_metadata=img_metadata
         )
+        fname_dict['img_metadata'] = fname_dict['img'].split('.')[0] + '_metadata.json'
+
+        with open(os.path.join(project_path, fname_dict['img_metadata']), 'w') as f:
+            f.write(json.dumps(img_metadata))
         time_mago = time.time()
 
         print(res.text)
 
-        # f = open('server/logs/%s.txt' % project_id_str, 'a')
-        # processing_time = "%s\t%f\t%f\n" % (fname_dict['img'], time_a, time_b)
-        # f.write(processing_time)
-
-        conn = sqlite3.connect('server/livedronemap_log.db')
+        conn = sqlite3.connect(app.config['LOG_DB_PATH'])
         cur = conn.cursor()
-
-        # depreceated - 로딕스 제공 자료
-        # with open(os.path.join(project_path, fname_dict['img_rectified'].split('.')[0] + '_ships.json'), 'w') as f:
-        #     data_ships = []
-        #     for detected_object in detected_objects:
-        #         data_ships.append({
-        #             'ship_id': detected_object['number'],
-        #             'centroid_wkt': detected_object['geometry'],
-        #             'bbox_wkt': detected_object['bounding_box_geometry']
-        #         })
-        #     json.dump(data_ships, f)
 
         query = 'INSERT INTO processing_time VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         if detected_objects == []:

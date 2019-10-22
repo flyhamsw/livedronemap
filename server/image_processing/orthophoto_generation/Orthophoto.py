@@ -110,6 +110,9 @@ def rectify(project_path, img_fname, img_rectified_fname, eo, ground_height, sen
         dstSRS='EPSG:4326'
     )
 
+    # Remove orthoimage georeferenced as EPSG:5186
+    os.remove(os.path.join(project_path, img_rectified_fname_kctm))
+
     print("--- %s seconds ---" % (time.time() - start_time))
 
     print('*** Processing time per each image')

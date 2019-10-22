@@ -5,11 +5,11 @@ from tqdm import tqdm
 import numpy as np
 import arrow
 
-from drone.config import BaseConfig as Config
+from config.config_watchdog import BaseConfig as Config
 from clients.ldm_client import Livedronemap
 from clients.mago3d import Mago3D
 
-MAGO3D_CONFIG = json.load(open('drone/config_mago3d.json', 'r'))
+MAGO3D_CONFIG = json.load(open('config/config_mago3d.json', 'r'))
 
 
 def start_image_check(simulation_id_str=None):
