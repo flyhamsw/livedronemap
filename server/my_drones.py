@@ -17,6 +17,10 @@ class BaseDrone(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def get_camera_manufacturer_name(self):
+        pass
+
+    @abstractmethod
     def preprocess_eo_file(self, eo_path):
         """
         This abstract function parses a given EO file and returns parsed_eo (see below).
@@ -33,23 +37,25 @@ class BaseDrone(metaclass=ABCMeta):
         pass
 
 
-# TODO: 에이미파이 클래스 구현
 class AIMIFYFlirDuoProR(BaseDrone):
     def __init__(self, pre_calibrated=False):
         self.ipod_params = {
-            "sensor_width": 6.3,
-            'focal_length': 0.0047,
+            "sensor_width": 7.4,
+            'focal_length': 0.008,
             'gsd': 'auto',
             'ground_height': 27.91387,
             "R_CB": np.array(
-                [[0.997391604272809, -0.0193033671589004, -0.0695511879297631],
-                 [0.0115400822765142, 0.993826984996126, -0.110339251377565],
-                 [0.0712517664845147, 0.109248816514592, 0.991457453380122]], dtype=float)
+                [[0.998424007914030, -0.0558051944297136, -0.00593975551236918],
+                [-0.00675010686299412, -0.0143438195676995, -0.999874337553249],
+                [0.0557129830310944,    0.998338637494749, -0.0146979048474889]], dtype=float)
         }
         self.pre_calibrated = pre_calibrated
 
     def get_drone_name(self):
-        return "DJI Mavic"
+        return "AIMIFYFlirDuoProR"
+
+    def get_camera_manufacturer_name(self):
+        return 'AIMIFY/FLIR/Visible'
 
     def preprocess_eo_file(self, eo_path):
         eo_line = np.genfromtxt(
@@ -79,14 +85,17 @@ class DJIMavic(BaseDrone):
             'gsd': 'auto',
             'ground_height': 27.91387,
             "R_CB": np.array(
-                [[0.997391604272809, -0.0193033671589004, -0.0695511879297631],
-                 [0.0115400822765142, 0.993826984996126, -0.110339251377565],
-                 [0.0712517664845147, 0.109248816514592, 0.991457453380122]], dtype=float)
+                [[0.996270284462972, -0.0845707313471919, -0.0171263450703691],
+                 [0.0857291664934870, 0.992672993233668, 0.0851518556277114],
+                 [0.00979950551814992, -0.0863024907167326, 0.996220783655756]], dtype=float)
         }
         self.pre_calibrated = pre_calibrated
 
     def get_drone_name(self):
         return "DJI Mavic"
+
+    def get_camera_manufacturer_name(self):
+        return 'DJI'
 
     def preprocess_eo_file(self, eo_path):
         eo_line = np.genfromtxt(
@@ -125,6 +134,9 @@ class DJIPhantom4RTK(BaseDrone):
     def get_drone_name(self):
         return "DJI Phantom 4 RTK"
 
+    def get_camera_manufacturer_name(self):
+        return 'DJI'
+
     def preprocess_eo_file(self, eo_path):
         eo_line = np.genfromtxt(
             eo_path,
@@ -157,6 +169,9 @@ class TiLabETRI(BaseDrone):
 
     def get_drone_name(self):
         return "DJI M600 with TiLab-ETRI real-time transmission system"
+
+    def get_camera_manufacturer_name(self):
+        return 'SONY'
 
     def preprocess_eo_file(self, eo_path):
         with open(eo_path, 'r') as f:

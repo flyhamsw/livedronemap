@@ -53,3 +53,7 @@ def rotate(image, angle):
     # perform the actual rotation and return the image
     rotated_mat = cv2.warpAffine(image, rotation_mat, (bound_w, bound_h))
     return rotated_mat
+
+
+if __name__ == '__main__':
+    getExif('server/image_processing/test_FDPRV.JPG')

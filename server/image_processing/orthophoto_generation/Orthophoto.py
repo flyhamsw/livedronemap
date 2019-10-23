@@ -24,7 +24,7 @@ def export_bbox_to_wkt(bbox):
     return wkt
 
 
-def rectify(project_path, img_fname, img_rectified_fname, eo, ground_height, sensor_width, gsd='auto'):
+def rectify(project_path, img_fname, img_rectified_fname, eo, ground_height, sensor_width, focal_length, gsd='auto'):
     """
     In order to generate individual ortho-image, this function rectifies a given drone image on a reference plane.
     :param img_fname:
@@ -44,7 +44,8 @@ def rectify(project_path, img_fname, img_rectified_fname, eo, ground_height, sen
     image = cv2.imread(img_path)
 
     # 0. Extract EXIF data from a image
-    focal_length, orientation = getExif(img_path)  # unit: m
+    # focal_length, orientation = getExif(img_path)  # unit: m
+    orientation = 0
 
     # 1. Restore the image based on orientation information
     restored_image = restoreOrientation(image, orientation)

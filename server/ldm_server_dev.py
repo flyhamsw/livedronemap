@@ -31,7 +31,7 @@ mago3d = Mago3D(
     api_key=app.config['MAGO3D_CONFIG']['api_key']
 )
 
-from server.my_drones import DJIMavic as My_drone
+from server.my_drones import AIMIFYFlirDuoProR as My_drone
 my_drone = My_drone(pre_calibrated=False)
 
 
@@ -95,10 +95,11 @@ def ldm_upload(project_id_str):
     if request.method == 'POST':
         # Initialize variables
         project_path = os.path.join(app.config['UPLOAD_FOLDER'], project_id_str)
+        fname_time = str(round(time.time()))
         fname_dict = {
-            'img': None,
+            'img': my_drone.get_drone_name() + '_' + fname_time + '.JPG',
             'img_rectified': None,
-            'eo': None,
+            'eo': my_drone.get_drone_name() + '_' + fname_time + '.txt',
             'img_metadata': None,
         }
 
@@ -110,7 +111,7 @@ def ldm_upload(project_id_str):
             if file.filename == '':  # Value check
                 return 'No selected file'
             if file and allowed_file(file.filename):  # If the keys and corresponding values are OK
-                fname_dict[key] = secure_filename(file.filename)
+                fname_orig = secure_filename(file.filename)
                 file.save(os.path.join(project_path, fname_dict[key]))
                 time_recept = time.time()
             else:
@@ -134,6 +135,7 @@ def ldm_upload(project_id_str):
             eo=parsed_eo,
             ground_height=my_drone.ipod_params['ground_height'],
             sensor_width=my_drone.ipod_params['sensor_width'],
+            focal_length=my_drone.ipod_params['focal_length'],
             gsd=my_drone.ipod_params['gsd']
         )
         time_ortho = time.time()
@@ -174,14 +176,19 @@ def ldm_upload(project_id_str):
         conn = sqlite3.connect(app.config['LOG_DB_PATH'])
         cur = conn.cursor()
 
-        query = 'INSERT INTO processing_time VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        if my_drone.get_drone_name() == 'AIMIFYFlirDuoProR':
+            create_time = get_create_time(fname_orig, my_drone.get_drone_name())
+        else:
+            create_time = get_create_time(os.path.join(project_path, fname_dict['img']), my_drone.get_drone_name())
+
+        query = 'INSERT INTO processing_time VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         if detected_objects == []:
             cur.execute(
                 query,
                 (
                     project_id_str,
                     fname_dict['img'],
-                    get_create_time(os.path.join(project_path, fname_dict['img'])),
+                    create_time,
                     os.path.getmtime(os.path.join(project_path, fname_dict['img'])),
                     time_recept,
                     time_syscal,
@@ -189,7 +196,8 @@ def ldm_upload(project_id_str):
                     time_od,
                     time_mago,
                     None,
-                    None
+                    None,
+                    fname_orig
                 )
             )
         for detected_object in detected_objects:
@@ -198,7 +206,7 @@ def ldm_upload(project_id_str):
                 (
                     project_id_str,
                     fname_dict['img'],
-                    get_create_time(os.path.join(project_path, fname_dict['img'])),
+                    create_time,
                     os.path.getmtime(os.path.join(project_path, fname_dict['img'])),
                     time_recept,
                     time_syscal,
@@ -206,7 +214,8 @@ def ldm_upload(project_id_str):
                     time_od,
                     time_mago,
                     detected_object['geometry'],
-                    detected_object['bounding_box_geometry']
+                    detected_object['bounding_box_geometry'],
+                    fname_orig
                 )
             )
         conn.commit()

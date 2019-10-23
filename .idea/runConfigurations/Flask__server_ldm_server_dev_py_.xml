@@ -1,14 +1,14 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Flask (server/ldm_server_dev.py)" type="Python.FlaskServer" nameIsGenerated="true">
     <option name="additionalOptions" value="--host=0.0.0.0 --port=30000" />
-    <module name="livedronemap-new" />
+    <module name="livedronemap" />
     <option name="target" value="$PROJECT_DIR$/server/ldm_server_dev.py" />
     <option name="targetType" value="PATH" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
-    <option name="SDK_HOME" value="" />
+    <option name="SDK_HOME" value="sftp://innopam-ldm@61.38.45.112:5001/home/innopam-ldm/anaconda3/envs/livedronemap/bin/python" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-    <option name="IS_MODULE_SDK" value="true" />
+    <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
