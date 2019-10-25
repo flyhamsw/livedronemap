@@ -31,7 +31,7 @@ mago3d = Mago3D(
     api_key=app.config['MAGO3D_CONFIG']['api_key']
 )
 
-from server.my_drones import AIMIFYFlirDuoProR as My_drone
+from server.my_drones import AIMIFYSONY as My_drone
 my_drone = My_drone(pre_calibrated=False)
 
 
@@ -124,6 +124,9 @@ def ldm_upload(project_id_str):
             parsed_eo[3] = omega
             parsed_eo[4] = phi
             parsed_eo[5] = kappa
+        if omega > abs(0.175) or phi > abs(0.175):
+            print('Too much omega/phi will kill you')
+            return 'Too much omega/phi will kill you'
         time_syscal = time.time()
 
         # IPOD chain 2: Individual ortho-image generation
