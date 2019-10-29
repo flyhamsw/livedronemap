@@ -31,7 +31,7 @@ mago3d = Mago3D(
     api_key=app.config['MAGO3D_CONFIG']['api_key']
 )
 
-from server.my_drones import AIMIFYSONY as My_drone
+from server.my_drones import DJIMavic as My_drone
 my_drone = My_drone(pre_calibrated=False)
 
 
@@ -50,11 +50,14 @@ def project():
         project_list = os.listdir(app.config['UPLOAD_FOLDER'])
         return json.dumps(project_list)
     if request.method == 'POST':
-        # Create a new project on Mago3D
-        res = mago3d.create_project(request.json['name'], request.json['project_type'], request.json['shooting_area'])
-
-        # Mago3D assigns a new project ID to LDM
-        project_id = str(res.json()['droneProjectId'])
+        if request.json['visualization_module'] == 'MAGO3D':
+            # Create a new project on Mago3D
+            res = mago3d.create_project(request.json['name'], request.json['project_type'],
+                                        request.json['shooting_area'])
+            # Mago3D assigns a new project ID to LDM
+            project_id = str(res.json()['droneProjectId'])
+        elif request.json['visualization_module'] == 'LOCAL':
+            project_id = 'LOCAL_%s' % round(time.time())
 
         # Using the assigned ID, ldm makes a new folder to projects directory
         new_project_dir = os.path.join(app.config['UPLOAD_FOLDER'], project_id)
@@ -111,7 +114,9 @@ def ldm_upload(project_id_str):
             if file.filename == '':  # Value check
                 return 'No selected file'
             if file and allowed_file(file.filename):  # If the keys and corresponding values are OK
-                fname_orig = secure_filename(file.filename)
+                # fname_orig = secure_filename(file.filename)
+                fname_orig = None
+                fname_dict[key] = secure_filename(file.filename)
                 file.save(os.path.join(project_path, fname_dict[key]))
                 time_recept = time.time()
             else:
@@ -124,9 +129,9 @@ def ldm_upload(project_id_str):
             parsed_eo[3] = omega
             parsed_eo[4] = phi
             parsed_eo[5] = kappa
-        if omega > abs(0.175) or phi > abs(0.175):
-            print('Too much omega/phi will kill you')
-            return 'Too much omega/phi will kill you'
+        # if omega > abs(0.175) or phi > abs(0.175):
+        #     print('Too much omega/phi will kill you')
+        #     return 'Too much omega/phi will kill you'
         time_syscal = time.time()
 
         # IPOD chain 2: Individual ortho-image generation
@@ -150,31 +155,30 @@ def ldm_upload(project_id_str):
         )
         time_od = time.time()
 
-        # Generate metadata for Mago3D
-        img_metadata = create_img_metadata(
-            drone_project_id=int(project_id_str),
-            data_type='0',
-            file_name=fname_dict['img_rectified'],
-            detected_objects=detected_objects,
-            drone_id='0',
-            drone_name=my_drone.get_drone_name(),
-            parsed_eo=parsed_eo
-        )
-
-        print(img_metadata)
-
         # Mago3D에 전송
-        res = mago3d.upload(
-            img_rectified_path=os.path.join(project_path, fname_dict['img_rectified']),
-            img_metadata=img_metadata
-        )
-        fname_dict['img_metadata'] = fname_dict['img'].split('.')[0] + '_metadata.json'
-
-        with open(os.path.join(project_path, fname_dict['img_metadata']), 'w') as f:
-            f.write(json.dumps(img_metadata))
-        time_mago = time.time()
-
-        print(res.text)
+        if project_id_str[0:5] != 'LOCAL':
+            # Generate metadata for Mago3D
+            img_metadata = create_img_metadata(
+                drone_project_id=int(project_id_str),
+                data_type='0',
+                file_name=fname_dict['img_rectified'],
+                detected_objects=detected_objects,
+                drone_id='0',
+                drone_name=my_drone.get_drone_name(),
+                parsed_eo=parsed_eo
+            )
+            print(img_metadata)
+            fname_dict['img_metadata'] = fname_dict['img'].split('.')[0] + '_metadata.json'
+            with open(os.path.join(project_path, fname_dict['img_metadata']), 'w') as f:
+                f.write(json.dumps(img_metadata))
+            res = mago3d.upload(
+                img_rectified_path=os.path.join(project_path, fname_dict['img_rectified']),
+                img_metadata=img_metadata
+            )
+            print(res.text)
+            time_mago = time.time()
+        else:
+            time_mago = None
 
         conn = sqlite3.connect(app.config['LOG_DB_PATH'])
         cur = conn.cursor()

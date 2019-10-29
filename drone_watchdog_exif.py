@@ -9,7 +9,7 @@ image_list = []
 eo_list = []
 
 ldm = Livedronemap(Config.LDM_ADDRESS)
-project_id = ldm.create_project(Config.LDM_PROJECT_NAME)
+project_id = ldm.create_project(Config.LDM_PROJECT_NAME, visualization_module=Config.VISUALIZATION_MODE)
 ldm.set_current_project(project_id)
 
 print('Current project ID: %s' % project_id)
