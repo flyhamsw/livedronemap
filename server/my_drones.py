@@ -43,7 +43,7 @@ class AIMIFYFlirDuoProR(BaseDrone):
             "sensor_width": 7.4,
             'focal_length': 0.008,
             'gsd': 'auto',
-            'ground_height': 27.91387,
+            'ground_height': 12.0,
             "R_CB": np.array(
                 [[0.998424007914030, -0.0558051944297136, -0.00593975551236918],
                 [-0.00675010686299412, -0.0143438195676995, -0.999874337553249],
@@ -80,10 +80,10 @@ class AIMIFYFlirDuoProR(BaseDrone):
 class AIMIFYSONY(BaseDrone):
     def __init__(self, pre_calibrated=False):
         self.ipod_params = {
-            "sensor_width": 4.4,
+            "sensor_width": 23.5,
             'focal_length': 0.020,
             'gsd': 'auto',
-            'ground_height': 27.91387,
+            'ground_height': 0,
             "R_CB": np.array(
                 [[0.994367334553110, 0.0724297138251540, -0.0773791995884510],
                 [-0.0736697531217240, 0.997194145601333, -0.0132892232057198],

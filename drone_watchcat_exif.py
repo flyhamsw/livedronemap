@@ -28,7 +28,7 @@ def diff(current, previous):
 
 previous = os.listdir(Config.DIRECTORY_TO_WATCH)
 for i in range(0, 10000):
-    time.sleep(5)
+    time.sleep(10)
     current = os.listdir(Config.DIRECTORY_TO_WATCH)
     new = diff(current, previous)
     for fname in new:
