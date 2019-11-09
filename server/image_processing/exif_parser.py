@@ -29,13 +29,25 @@ def extract_eo(fname, camera_manufacturer):
         longitude = convert_dms_to_deg(longitude)
         altitude = float(altitude)
     elif camera_manufacturer == 'AIMIFY/FLIR/Visible':
-        fname_split = fname.split('/')[-1].split('_')
-        latitude = float(fname_split[4])
-        longitude = float(fname_split[5])
-        altitude = float(fname_split[6])
-        roll = float(fname_split[7])
-        pitch = float(fname_split[8])
-        yaw = float(fname_split[9][:-4])
+        # TODO: 광나루 실험 (2019년 11월 6일)
+        metadata = pyexiv2.ImageMetadata(fname)
+        metadata.read()
+        latitude = metadata['Exif.GPSInfo.GPSLatitude'].value
+        longitude = metadata['Exif.GPSInfo.GPSLongitude'].value
+        altitude = metadata['Exif.GPSInfo.GPSAltitude'].value
+        latitude = convert_dms_to_deg(latitude)
+        longitude = convert_dms_to_deg(longitude)
+        altitude = float(altitude)
+        roll = 0
+        pitch = 0
+        yaw = 0
+        # fname_split = fname.split('/')[-1].split('_')
+        # latitude = float(fname_split[4])
+        # longitude = float(fname_split[5])
+        # altitude = float(fname_split[6])
+        # roll = float(fname_split[7])
+        # pitch = float(fname_split[8])
+        # yaw = float(fname_split[9][:-4])
     elif camera_manufacturer == 'AIMIFY/SONY':
         fname_split = fname.split('/')[-1].split('_')
         latitude = float(fname_split[2])
@@ -87,4 +99,4 @@ def get_create_time(fname, camera_manufacturer):
 if __name__ == '__main__':
     import os
     print(os.getcwd())
-    print(get_create_time('server/image_processing/test_FDPRV.JPG'))
+    print(extract_eo('server/image_processing/test_FDPRV.JPG', 'AIMIFY/FLIR/Visible'))

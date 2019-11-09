@@ -39,15 +39,23 @@ class BaseDrone(metaclass=ABCMeta):
 
 class AIMIFYFlirDuoProR(BaseDrone):
     def __init__(self, pre_calibrated=False):
+        # self.ipod_params = {
+        #     "sensor_width": 7.4,
+        #     'focal_length': 0.008,
+        #     'gsd': 'auto',
+        #     'ground_height': 12.0,
+        #     "R_CB": np.array(
+        #         [[0.998424007914030, -0.0558051944297136, -0.00593975551236918],
+        #         [-0.00675010686299412, -0.0143438195676995, -0.999874337553249],
+        #         [0.0557129830310944,    0.998338637494749, -0.0146979048474889]], dtype=float)
+        # }
+        # TODO: 광나루 실험 (2019년 11월 6일)
         self.ipod_params = {
             "sensor_width": 7.4,
             'focal_length': 0.008,
             'gsd': 'auto',
             'ground_height': 12.0,
-            "R_CB": np.array(
-                [[0.998424007914030, -0.0558051944297136, -0.00593975551236918],
-                [-0.00675010686299412, -0.0143438195676995, -0.999874337553249],
-                [0.0557129830310944,    0.998338637494749, -0.0146979048474889]], dtype=float)
+            "R_CB": np.zeros((3, 3), dtype=float)
         }
         self.pre_calibrated = pre_calibrated
 

@@ -1,25 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="innopam-ldm@61.38.45.117:3390">
+  <component name="PublishConfigData" autoUpload="Always" serverName="innopam-ldm@61.38.45.117:5001">
     <serverData>
-      <paths name="innopam-ldm@61.38.45.117:3390">
+      <paths name="innopam-ldm@61.38.45.117:5001">
         <serverdata>
           <mappings>
             <mapping deploy="/home/innopam-ldm/livedronemap" local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="lsm@172.16.127.26:22">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="lsm@172.16.127.26:22 (1)">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
