@@ -44,7 +44,7 @@ class Handler(FileSystemEventHandler):
         if event.is_directory:
             return None
         elif event.event_type == 'created':
-            file_name = event.src_path.split('\\')[-1][:-4]
+            file_name = event.src_path.split('\\')[-1][:-(len(Config.IMAGE_FILE_EXT) + 1)]
             extension_name = event.src_path.split('\\')[-1].split('.')[-1]
             print('A new file detected: %s' % file_name)
             if Config.IMAGE_FILE_EXT in extension_name:

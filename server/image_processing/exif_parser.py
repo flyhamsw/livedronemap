@@ -21,7 +21,7 @@ def extract_eo(fname, camera_manufacturer):
         metadata.read()
         latitude = metadata['Exif.GPSInfo.GPSLatitude'].value
         longitude = metadata['Exif.GPSInfo.GPSLongitude'].value
-        altitude = metadata['Xmp.drone-dji.AbsoluteAltitude'].value
+        altitude = metadata['Xmp.drone-dji.RelativeAltitude'].value
         roll = float(metadata['Xmp.drone-dji.FlightRollDegree'].value)
         pitch = float(metadata['Xmp.drone-dji.FlightPitchDegree'].value)
         yaw = float(metadata['Xmp.drone-dji.FlightYawDegree'].value)
@@ -56,6 +56,28 @@ def extract_eo(fname, camera_manufacturer):
         roll = float(fname_split[5])
         pitch = float(fname_split[6])
         yaw = float(fname_split[7][:-4])
+    elif camera_manufacturer == 'FOREST/FVPR':
+        metadata = pyexiv2.ImageMetadata(fname)
+        metadata.read()
+        latitude = metadata['Exif.GPSInfo.GPSLatitude'].value
+        longitude = metadata['Exif.GPSInfo.GPSLongitude'].value
+        altitude = metadata['Exif.GPSInfo.GPSAltitude'].value
+        latitude = convert_dms_to_deg(latitude)
+        longitude = convert_dms_to_deg(longitude)
+        altitude = float(altitude)
+        roll = metadata['Xmp.FLIR.MAVRoll'].value
+        pitch = metadata['Xmp.FLIR.MAVPitch'].value
+        yaw = metadata['Xmp.FLIR.MAVYaw'].value
+        roll = float(roll.split('/')[0]) / float(roll.split('/')[1])
+        pitch = float(pitch.split('/')[0]) / float(pitch.split('/')[1])
+        yaw = float(yaw.split('/')[0]) / float(yaw.split('/')[1])
+    elif camera_manufacturer == 'NULL':
+        latitude = 0
+        longitude = 0
+        altitude = 0
+        roll = 0
+        pitch = 0
+        yaw = 0
 
     result = {
         'longitude': longitude,
@@ -99,4 +121,4 @@ def get_create_time(fname, camera_manufacturer):
 if __name__ == '__main__':
     import os
     print(os.getcwd())
-    print(extract_eo('server/image_processing/test_FDPRV.JPG', 'AIMIFY/FLIR/Visible'))
+    print(extract_eo('/hdd/ldm_workspace/LOCAL_1575518800/20191128_150009.tiff', 'FOREST/FVPR'))

@@ -16,6 +16,7 @@ from drone.drone_image_check import start_image_check
 from server.object_detection.ship_yolo import detect_ship
 from server.image_processing.orthophoto_generation.Orthophoto import rectify
 from server.image_processing.exif_parser import get_create_time
+from server.image_processing.photoscan_neighbor_AT.run_neighbor_AT import run_neighbor_AT
 
 # Initialize flask
 app = Flask(__name__)
@@ -98,13 +99,24 @@ def ldm_upload(project_id_str):
     if request.method == 'POST':
         # Initialize variables
         project_path = os.path.join(app.config['UPLOAD_FOLDER'], project_id_str)
-        fname_time = str(round(time.time()))
+        # fname_time = str(round(time.time()))
+        # fname_dict = {
+        #     'img': my_drone.get_drone_name() + '_' + fname_time + '.JPG',
+        #     'img_rectified': None,
+        #     'eo': my_drone.get_drone_name() + '_' + fname_time + '.txt',
+        #     'img_metadata': None,
+        # }
         fname_dict = {
-            'img': my_drone.get_drone_name() + '_' + fname_time + '.JPG',
+            'img': None,
+            'img_orig': None,
             'img_rectified': None,
-            'eo': my_drone.get_drone_name() + '_' + fname_time + '.txt',
+            'eo': None,
             'img_metadata': None,
         }
+
+        # Establish connection to log DB
+        conn = sqlite3.connect(app.config['LOG_DB_PATH'])
+        cur = conn.cursor()
 
         # Check integrity of uploaded files
         for key in ['img', 'eo']:
@@ -114,24 +126,106 @@ def ldm_upload(project_id_str):
             if file.filename == '':  # Value check
                 return 'No selected file'
             if file and allowed_file(file.filename):  # If the keys and corresponding values are OK
-                # fname_orig = secure_filename(file.filename)
-                fname_orig = None
                 fname_dict[key] = secure_filename(file.filename)
+                if key == 'img':
+                    fname_dict['img_orig'] = fname_dict['img']
                 file.save(os.path.join(project_path, fname_dict[key]))
                 time_recept = time.time()
             else:
                 return 'Failed to save the uploaded files'
 
-        # IPOD chain 1: System calibration
-        parsed_eo = my_drone.preprocess_eo_file(os.path.join(project_path, fname_dict['eo']))
-        if not my_drone.pre_calibrated:
-            omega, phi, kappa = calibrate(parsed_eo[3], parsed_eo[4], parsed_eo[5], my_drone.ipod_params['R_CB'])
-            parsed_eo[3] = omega
-            parsed_eo[4] = phi
-            parsed_eo[5] = kappa
-        # if omega > abs(0.175) or phi > abs(0.175):
-        #     print('Too much omega/phi will kill you')
-        #     return 'Too much omega/phi will kill you'
+        # Insert initial data into log DB
+        if my_drone.get_drone_name() == 'AIMIFYFlirDuoProR':
+            create_time = get_create_time(fname_dict['img_orig'], my_drone.get_drone_name())
+        else:
+            create_time = get_create_time(os.path.join(project_path, fname_dict['img']), my_drone.get_drone_name())
+        query = 'INSERT INTO processing_time '\
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        cur.execute(
+            query,
+            (
+                project_id_str,
+                fname_dict['img'],
+                create_time,
+                os.path.getmtime(os.path.join(project_path, fname_dict['img'])),
+                time_recept,
+                None, None, None, None, None,
+                fname_dict['img_orig']
+            )
+        )
+
+        # IPOD chain 1: Georeferencing
+        if app.config['GEOREFERENCING_METHOD'] == 'DIRECT_GEOREFERENCING':
+            parsed_eo = my_drone.preprocess_eo_file(os.path.join(project_path, fname_dict['eo']))
+            if not my_drone.pre_calibrated:
+                omega, phi, kappa = calibrate(parsed_eo[3], parsed_eo[4], parsed_eo[5], my_drone.ipod_params['R_CB'])
+                parsed_eo[3] = omega
+                parsed_eo[4] = phi
+                parsed_eo[5] = kappa
+            # # Activate here to avoid memory fault (especially when using fixed-wing drones)
+            # if omega > abs(0.175) or phi > abs(0.175):
+            #     print('Too much omega/phi will kill you')
+            #     return 'Too much omega/phi will kill you'
+
+        elif app.config['GEOREFERENCING_METHOD'] == 'NEIGHBOR_AT_PHOTOSCAN':
+            # Check if there are >= 5 images
+            query = 'SELECT count(*) FROM processing_time ' \
+                    'WHERE project_id=?;'
+            cur.execute(query, (project_id_str,))
+            num_of_images = cur.fetchone()[0]
+            if num_of_images < 5:
+                print('Current georeferencing mode is NEIGHTBOR_AT_PHOTOSCAN, and waiting for more images')
+                conn.commit()
+                conn.close()
+                return 'Current georeferencing mode is NEIGHTBOR_AT_PHOTOSCAN, and waiting for more images'
+            else:
+                # TODO: Implement 5 images AT algorithm using PhotoScan
+                print('Starting AT using PhotoScan...')
+                # If there are >= 5 images, process image where ROWID = maxROWID - 2
+                query = 'SELECT img_fname FROM processing_time ' \
+                        'WHERE project_id=? AND ' \
+                        'ABS(processing_time.ROWID - ' \
+                        '(SELECT ROWID - 2 from processing_time ' \
+                        'WHERE project_id=? AND ' \
+                        'img_fname=?)' \
+                        ') <= 2;'
+                cur.execute(query, (project_id_str, project_id_str, fname_dict['img']))
+                result = cur.fetchall()
+
+                # Extract fnames from fetched result
+                neighborhood_images_fname_list = []
+                for row in result:
+                    neighborhood_images_fname = row[0]
+                    neighborhood_images_fname_list.append(neighborhood_images_fname)
+
+                # Query 5 neighborhood images from log DB
+                query = 'SELECT img_fname FROM processing_time ' \
+                        'WHERE project_id=? AND ' \
+                        'ABS(processing_time.ROWID - ' \
+                        '(SELECT ROWID - 2 from processing_time ' \
+                        'WHERE project_id=? AND ' \
+                        'img_fname=?)' \
+                        ') <= 2;'
+                cur.execute(query, (project_id_str, project_id_str, fname_dict['img']))
+                result = cur.fetchall()
+
+                print(result)
+
+                # Extract fnames from fetched result
+                fname_neighborhood_list = []
+                for row in result:
+                    fname = row[0]
+                    fpath = os.path.join(project_path, fname)
+                    fname_neighborhood_list.append(fpath)
+
+                # Substitute fname_dict with ROWID - 2
+                fname_dict['img'] = fname_neighborhood_list[2]
+                fname_dict['img_orig'] = fname_neighborhood_list[2]
+                fname_dict['eo'] = fname_neighborhood_list[2].split('.')[0] + '_neighborhood_AT.txt'
+
+                # Run neighborhood AT program
+                run_neighbor_AT(fname_neighborhood_list, os.path.join(project_path, fname_dict['eo']))
+                parsed_eo = my_drone.preprocess_eo_file(os.path.join(project_path, fname_dict['eo']))
         time_syscal = time.time()
 
         # IPOD chain 2: Individual ortho-image generation
@@ -180,51 +274,31 @@ def ldm_upload(project_id_str):
         else:
             time_mago = None
 
-        conn = sqlite3.connect(app.config['LOG_DB_PATH'])
-        cur = conn.cursor()
-
-        if my_drone.get_drone_name() == 'AIMIFYFlirDuoProR':
-            create_time = get_create_time(fname_orig, my_drone.get_drone_name())
-        else:
-            create_time = get_create_time(os.path.join(project_path, fname_dict['img']), my_drone.get_drone_name())
-
-        query = 'INSERT INTO processing_time VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        if detected_objects == []:
-            cur.execute(
-                query,
-                (
-                    project_id_str,
-                    fname_dict['img'],
-                    create_time,
-                    os.path.getmtime(os.path.join(project_path, fname_dict['img'])),
-                    time_recept,
-                    time_syscal,
-                    time_ortho,
-                    time_od,
-                    time_mago,
-                    None,
-                    None,
-                    fname_orig
-                )
+        # 로그 DB 갱신: 결과 입력
+        if not detected_objects:
+            detected_objects = [{
+                'geometry': None,
+                'bounding_box_geometry': None
+            }]
+        query = 'UPDATE processing_time ' \
+                'SET time_syscal = ?, ' \
+                'time_ortho = ?, ' \
+                'time_od = ?, ' \
+                'time_mago = ?, ' \
+                'ship_detection = ? ' \
+                'WHERE project_id = ?'
+        cur.execute(
+            query,
+            (
+                time_syscal,
+                time_ortho,
+                time_od,
+                time_mago,
+                json.dumps(detected_objects),
+                project_id_str
             )
-        for detected_object in detected_objects:
-            cur.execute(
-                query,
-                (
-                    project_id_str,
-                    fname_dict['img'],
-                    create_time,
-                    os.path.getmtime(os.path.join(project_path, fname_dict['img'])),
-                    time_recept,
-                    time_syscal,
-                    time_ortho,
-                    time_od,
-                    time_mago,
-                    detected_object['geometry'],
-                    detected_object['bounding_box_geometry'],
-                    fname_orig
-                )
-            )
+        )
+
         conn.commit()
         conn.close()
 

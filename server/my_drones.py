@@ -131,7 +131,7 @@ class DJIMavic(BaseDrone):
             "sensor_width": 6.3,
             'focal_length': 0.0047,
             'gsd': 'auto',
-            'ground_height': 27.91387,
+            'ground_height': 363.7,
             "R_CB": np.array(
                 [[0.996270284462972, -0.0845707313471919, -0.0171263450703691],
                  [0.0857291664934870, 0.992672993233668, 0.0851518556277114],

@@ -10,9 +10,9 @@ def create_img_metadata(drone_project_id, data_type, file_name, detected_objects
         "drone": {
             "drone_id": drone_id,
             "drone_name": drone_name,
-            "latitude": parsed_eo[1],
-            "longitude": parsed_eo[0],
-            "altitude": parsed_eo[2],
+            "latitude": round(parsed_eo[1], 3),
+            "longitude": round(parsed_eo[0], 3),
+            "altitude": round(parsed_eo[2], 3),
             "roll": round(parsed_eo[3], 3),
             "pitch": round(parsed_eo[4], 3),
             "yaw": round(parsed_eo[5], 3),
