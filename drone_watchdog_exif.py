@@ -52,7 +52,7 @@ class Handler(FileSystemEventHandler):
                 time.sleep(5)
                 eo_dict = extract_eo(file_name + '.' + Config.IMAGE_FILE_EXT, Config.CAMERA_MANUFACTURER)
                 with open(file_name + '.' + Config.EO_FILE_EXT, 'w') as f:
-                    eo_file_data = 'EO' + '\t' + \
+                    eo_file_data = file_name.split('/')[-1] + '.' + Config.IMAGE_FILE_EXT + '\t' + \
                                    str(eo_dict['longitude']) + '\t' + \
                                    str(eo_dict['latitude']) + '\t' + \
                                    str(eo_dict['altitude']) + '\t' + \
