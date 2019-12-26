@@ -49,7 +49,7 @@ class Handler(FileSystemEventHandler):
             print('A new file detected: %s' % file_name)
             if Config.IMAGE_FILE_EXT in extension_name:
                 image_list.append(file_name)
-                time.sleep(5)
+                time.sleep(10)
                 eo_dict = extract_eo(file_name + '.' + Config.IMAGE_FILE_EXT, Config.CAMERA_MANUFACTURER)
                 with open(file_name + '.' + Config.EO_FILE_EXT, 'w') as f:
                     eo_file_data = file_name.split('/')[-1] + '.' + Config.IMAGE_FILE_EXT + '\t' + \

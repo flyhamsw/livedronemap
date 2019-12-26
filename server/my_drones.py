@@ -37,6 +37,45 @@ class BaseDrone(metaclass=ABCMeta):
         pass
 
 
+class FlirVueProR(BaseDrone):
+    def __init__(self, pre_calibrated=False):
+        self.ipod_params = {
+            "sensor_width": 10.88,
+            'focal_length': 0.013,
+            'gsd': 0.25,
+            'ground_height': 363.7,
+            "R_CB": np.array([[0.996892729, -0.01561805212,   -0.0772072755],
+                              [0.01841927538, 0.999192656, 0.03570387246],
+                              [0.07658731773, -0.03701503292, 0.9963755668]], dtype=float)  # 191029
+        }
+        self.pre_calibrated = pre_calibrated
+
+    def get_drone_name(self):
+        return "FlirVueProR"
+
+    def get_camera_manufacturer_name(self):
+        return 'FlirVueProR'
+
+    def preprocess_eo_file(self, eo_path):
+        eo_line = np.genfromtxt(
+            eo_path,
+            delimiter='\t',
+            dtype={
+                'names': ('Image', 'Longitude', 'Latitude', 'Altitude', 'Yaw', 'Pitch', 'Roll'),
+                'formats': ('U15', '<f8', '<f8', '<f8', '<f8', '<f8', '<f8')
+            }
+        )
+
+        eo_line['Roll'] = eo_line['Roll'] * math.pi / 180
+        eo_line['Pitch'] = eo_line['Pitch'] * math.pi / 180
+        eo_line['Yaw'] = eo_line['Yaw'] * math.pi / 180
+
+        parsed_eo = [float(eo_line['Longitude']), float(eo_line['Latitude']), float(eo_line['Altitude']),
+                     float(eo_line['Roll']), float(eo_line['Pitch']), float(eo_line['Yaw'])]
+
+        return parsed_eo
+
+
 class AIMIFYFlirDuoProR(BaseDrone):
     def __init__(self, pre_calibrated=False):
         # self.ipod_params = {
@@ -55,7 +94,7 @@ class AIMIFYFlirDuoProR(BaseDrone):
             'focal_length': 0.008,
             'gsd': 'auto',
             'ground_height': 12.0,
-            "R_CB": np.zeros((3, 3), dtype=float)
+            "R_CB": np.eye(3, 3)
         }
         self.pre_calibrated = pre_calibrated
 

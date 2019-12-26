@@ -76,7 +76,7 @@ class Innophotoscan:
             row[j].normalize()
 
         R = PhotoScan.Matrix([row[0], row[1], row[2]])
-        yaw, pitch, roll = PhotoScan.utils.mat2ypr(R)  # estimated orientation angles
+        omega, phi, kappa = PhotoScan.utils.mat2opk(R)  # estimated orientation angles
 
         # print("EO(XYZ) = ", XYZ)
         # print("T = ", T)
@@ -87,7 +87,7 @@ class Innophotoscan:
         fname = ImgList[center_photo_index]
         #print(type(XYZ))
         XYZ_list = list(XYZ)
-        EO = [XYZ_list[0], XYZ_list[1], XYZ_list[2], yaw, pitch, roll]
+        EO = [XYZ_list[0], XYZ_list[1], XYZ_list[2], kappa, phi, omega]
 
         return fname, EO
 
