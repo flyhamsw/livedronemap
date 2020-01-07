@@ -32,7 +32,7 @@ mago3d = Mago3D(
     api_key=app.config['MAGO3D_CONFIG']['api_key']
 )
 
-from server.my_drones import DJIMavic as My_drone
+from server.my_drones import FlirVueProR as My_drone
 my_drone = My_drone(pre_calibrated=False)
 
 
