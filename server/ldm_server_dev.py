@@ -158,7 +158,7 @@ def ldm_upload(project_id_str):
         if app.config['GEOREFERENCING_METHOD'] == 'DIRECT_GEOREFERENCING':
             parsed_eo = my_drone.preprocess_eo_file(os.path.join(project_path, fname_dict['eo']))
             if not my_drone.pre_calibrated:
-                omega, phi, kappa = calibrate(parsed_eo[3], parsed_eo[4], parsed_eo[5], my_drone.ipod_params['R_CB'])
+                omega, phi, kappa = calibrate(parsed_eo[3], parsed_eo[4], parsed_eo[5], my_drone.ipod_params['R_CB'], my_drone.ipod_params['comb'])
                 parsed_eo[3] = omega
                 parsed_eo[4] = phi
                 parsed_eo[5] = kappa
