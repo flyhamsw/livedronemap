@@ -2,7 +2,7 @@ import os
 import json
 
 
-def run_neighbor_AT(fname_list, eo_path):
+def neighbor_AT(fname_list, eo_path):
     # Make bash command to run PhotoScan
     bash_str = 'bash /home/innopam-ldm/PhotoScan/photoscan-pro/photoscan.sh -r server/image_processing/photoscan/neighbor_AT.py --images '
     for fname in fname_list:
@@ -17,4 +17,4 @@ def run_neighbor_AT(fname_list, eo_path):
 
 
 if __name__ == '__main__':
-    run_neighbor_AT(['IMG_9354.jpg', 'IMG_9355.jpg', 'IMG_9356.jpg', 'IMG_9357.jpg', 'IMG_9358.jpg'], 'test.txt')
+    neighbor_AT(['IMG_9354.jpg', 'IMG_9355.jpg', 'IMG_9356.jpg', 'IMG_9357.jpg', 'IMG_9358.jpg'], 'test.txt')

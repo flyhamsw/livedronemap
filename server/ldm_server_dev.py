@@ -16,7 +16,7 @@ from drone.drone_image_check import start_image_check
 from server.object_detection.ship_yolo import detect_ship
 from server.image_processing.orthophoto_generation.Orthophoto import rectify
 from server.image_processing.exif_parser import get_create_time
-from server.image_processing.photoscan.run_neighbor_AT import run_neighbor_AT
+from server.image_processing.photoscan.run import neighbor_AT
 
 # Initialize flask
 app = Flask(__name__)
@@ -224,7 +224,7 @@ def ldm_upload(project_id_str):
                 fname_dict['eo'] = fname_neighborhood_list[2].split('.')[0] + '_neighborhood_AT.txt'
 
                 # Run neighborhood AT program
-                run_neighbor_AT(fname_neighborhood_list, os.path.join(project_path, fname_dict['eo']))
+                neighbor_AT(fname_neighborhood_list, os.path.join(project_path, fname_dict['eo']))
                 parsed_eo = my_drone.preprocess_eo_file(os.path.join(project_path, fname_dict['eo']))
         time_syscal = time.time()
 
